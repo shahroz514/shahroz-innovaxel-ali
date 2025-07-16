@@ -85,3 +85,37 @@ def get_original_url(short_code):
         'updatedAt': url_data['updatedAt'],
         'accessCount': url_data['accessCount'] + 1
     }), 200
+    
+@app.route('/shorten/<short_code>', methods=['PUT'])
+def update_short_url(short_code):
+    data = request.get_json()
+    new_url = data.get('url')
+
+    if not new_url:
+        return jsonify({'error': 'URL is required'}), 400
+    
+    if not validate_url(new_url):
+        return jsonify({'error': 'Invalid URL'}), 400
+
+    url_data = urls_collection.find_one({'shortCode': short_code})
+    if not url_data:
+        return jsonify({'error': 'Short URL not found'}), 404
+
+    now = datetime.utcnow()
+    urls_collection.update_one(
+        {'shortCode': short_code},
+        {'$set': {
+            'url': new_url,
+            'updatedAt': now
+        }}
+    )
+
+    updated_url = urls_collection.find_one({'shortCode': short_code})
+    
+    return jsonify({
+        'id': str(updated_url['_id']),
+        'url': updated_url['url'],
+        'shortCode': updated_url['shortCode'],
+        'createdAt': updated_url['createdAt'],
+        'updatedAt': updated_url['updatedAt']
+    }), 200
