@@ -14,7 +14,7 @@ A Flask-based URL shortening service with MongoDB.
 1. Clone the repository:
    
    git clone https://github.com/shahroz514/shahroz-innovaxel-ali.git
-   cd url-shortener
+   
 Install dependencies:
 
 
