@@ -119,3 +119,29 @@ def update_short_url(short_code):
         'createdAt': updated_url['createdAt'],
         'updatedAt': updated_url['updatedAt']
     }), 200
+
+
+@app.route('/shorten/<short_code>', methods=['DELETE'])
+def delete_short_url(short_code):
+    result = urls_collection.delete_one({'shortCode': short_code})
+    
+    if result.deleted_count == 0:
+        return jsonify({'error': 'Short URL not found'}), 404
+    
+    return '', 204
+
+@app.route('/shorten/<short_code>/stats', methods=['GET'])
+def get_url_stats(short_code):
+    url_data = urls_collection.find_one({'shortCode': short_code})
+    
+    if not url_data:
+        return jsonify({'error': 'Short URL not found'}), 404
+    
+    return jsonify({
+        'id': str(url_data['_id']),
+        'url': url_data['url'],
+        'shortCode': url_data['shortCode'],
+        'createdAt': url_data['createdAt'],
+        'updatedAt': url_data['updatedAt'],
+        'accessCount': url_data['accessCount']
+    }), 200
