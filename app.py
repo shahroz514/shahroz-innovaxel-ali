@@ -63,3 +63,25 @@ def create_short_url():
         'updatedAt': now,
         'shortUrl': f"{app.config['BASE_URL']}{short_code}"
     }), 201
+    
+@app.route('/shorten/<short_code>', methods=['GET'])
+def get_original_url(short_code):
+    url_data = urls_collection.find_one({'shortCode': short_code})
+    
+    if not url_data:
+        return jsonify({'error': 'Short URL not found'}), 404
+    
+    # Increment access count
+    urls_collection.update_one(
+        {'_id': url_data['_id']},
+        {'$inc': {'accessCount': 1}}
+    )
+    
+    return jsonify({
+        'id': str(url_data['_id']),
+        'url': url_data['url'],
+        'shortCode': url_data['shortCode'],
+        'createdAt': url_data['createdAt'],
+        'updatedAt': url_data['updatedAt'],
+        'accessCount': url_data['accessCount'] + 1
+    }), 200
