@@ -5,53 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URL Shortener</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>URL Shortener</h1>
+        <h1><i class="fas fa-link"></i> URL Shortener</h1>
         
         <div class="section">
-            <h2>Create Short URL</h2>
+            <h2><i class="fas fa-plus-circle"></i> Create Short URL</h2>
             <div class="form-group">
-                <input type="text" id="originalUrl" placeholder="Enter your long URL">
-                <button onclick="createShortUrl()">Shorten</button>
+                <input type="text" id="originalUrl" placeholder="https://example.com/very/long/url">
+                <button onclick="createShortUrl()"><i class="fas fa-compress-alt"></i> Shorten</button>
             </div>
-            <div id="shortUrlResult" class="result-box"></div>
+            <div id="shortUrlResult" class="result-box hidden">
+                <div class="url-display">
+                    <input type="text" id="shortUrlInput" readonly>
+                    <button id="copyButton" onclick="copyToClipboard()">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div id="originalUrlDisplay" class="original-url"></div>
+                <div class="actions">
+                    <button onclick="testShortUrl()"><i class="fas fa-external-link-alt"></i> Test</button>
+                    <button onclick="getShortUrlStats()"><i class="fas fa-chart-bar"></i> Stats</button>
+                </div>
+            </div>
         </div>
 
         <div class="section">
-            <h2>Manage URL</h2>
+            <h2><i class="fas fa-cog"></i> Manage URL</h2>
             <div class="form-group">
                 <input type="text" id="shortCodeInput" placeholder="Enter short code">
-                <button onclick="getUrlDetails()">Get Details</button>
-                <button onclick="deleteUrl()">Delete</button>
+                <button onclick="getUrlDetails()"><i class="fas fa-info-circle"></i> Details</button>
+                <button class="danger" onclick="deleteUrl()"><i class="fas fa-trash-alt"></i> Delete</button>
             </div>
             <div class="form-group">
                 <input type="text" id="updateUrl" placeholder="New URL to update">
-                <button onclick="updateUrl()">Update URL</button>
+                <button onclick="updateUrl()"><i class="fas fa-sync-alt"></i> Update</button>
             </div>
-            <div id="urlDetails" class="result-box"></div>
+            <div id="urlDetails" class="result-box hidden details-box"></div>
         </div>
 
         <div class="section">
-            <h2>URL Statistics</h2>
+            <h2><i class="fas fa-chart-pie"></i> URL Statistics</h2>
             <div class="form-group">
                 <input type="text" id="statsShortCode" placeholder="Enter short code">
-                <button onclick="getStats()">Get Stats</button>
+                <button onclick="getStats()"><i class="fas fa-search"></i> Get Stats</button>
             </div>
-            <div id="statsResult" class="result-box"></div>
+            <div id="statsResult" class="result-box hidden stats-box"></div>
         </div>
     </div>
 
     <script>
         const baseUrl = window.location.origin;
 
+        // Helper functions
+        function showElement(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function hideElement(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function resetCopyButton() {
+            const copyButton = document.getElementById('copyButton');
+            copyButton.innerHTML = '<i class="far fa-copy"></i> Copy';
+            copyButton.classList.remove('copied');
+        }
+
         async function makeRequest(url, method, data = null) {
             const options = {
                 method,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             };
             if (data) options.body = JSON.stringify(data);
             
@@ -61,106 +87,144 @@
                 if (!response.ok) throw new Error(result.error || 'Something went wrong');
                 return result;
             } catch (error) {
-                showError(error.message);
+                alert(`Error: ${error.message}`);
                 return null;
             }
         }
 
-        function showError(message) {
-            alert(`Error: ${message}`);
-        }
-
-        function displayResult(elementId, content, isUrl = false) {
-            const element = document.getElementById(elementId);
-            if (isUrl) {
-                element.innerHTML = `<a href="${content}" target="_blank">${content}</a>`;
-            } else {
-                element.innerHTML = content;
-            }
-        }
-
+        // Main functions
         async function createShortUrl() {
-            const originalUrl = document.getElementById('originalUrl').value;
+            const originalUrl = document.getElementById('originalUrl').value.trim();
             if (!originalUrl) {
-                showError('Please enter a URL');
+                alert('Please enter a URL');
                 return;
             }
 
-            const result = await makeRequest(`${baseUrl}/shorten`, 'POST', { url: originalUrl });
+            resetCopyButton();
+            hideElement('shortUrlResult');
+
+            const result = await makeRequest('/shorten', 'POST', { url: originalUrl });
             if (result) {
-                displayResult('shortUrlResult', 
-                    `Short URL: ${baseUrl}/${result.shortCode}<br>
-                     Original: ${result.url}`, true);
+                const shortUrl = `${baseUrl}/${result.shortCode}`;
+                document.getElementById('shortUrlInput').value = shortUrl;
+                document.getElementById('originalUrlDisplay').innerHTML = 
+                    `Original: <a href="${result.url}" target="_blank">${result.url}</a>`;
+                
+                // Store short code for other functions
+                document.getElementById('shortCodeInput').value = result.shortCode;
+                document.getElementById('statsShortCode').value = result.shortCode;
+                
+                showElement('shortUrlResult');
             }
         }
 
+        function copyToClipboard() {
+            const shortUrlInput = document.getElementById('shortUrlInput');
+            shortUrlInput.select();
+            
+            navigator.clipboard.writeText(shortUrlInput.value).then(() => {
+                const copyButton = document.getElementById('copyButton');
+                copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                copyButton.classList.add('copied');
+                setTimeout(resetCopyButton, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function testShortUrl() {
+            const shortUrl = document.getElementById('shortUrlInput').value;
+            if (shortUrl) {
+                window.open(shortUrl, '_blank');
+            }
+        }
+
+        async function getShortUrlStats() {
+            const shortCode = document.getElementById('shortUrlInput').value.split('/').pop();
+            if (shortCode) {
+                document.getElementById('statsShortCode').value = shortCode;
+                await getStats();
+            }
+        }
+
+        // Rest of your functions (getUrlDetails, updateUrl, deleteUrl, getStats) remain the same
         async function getUrlDetails() {
-            const shortCode = document.getElementById('shortCodeInput').value;
+            const shortCode = document.getElementById('shortCodeInput').value.trim();
             if (!shortCode) {
-                showError('Please enter a short code');
+                alert('Please enter a short code');
                 return;
             }
 
-            const result = await makeRequest(`${baseUrl}/shorten/${shortCode}`, 'GET');
+            hideElement('urlDetails');
+            const result = await makeRequest(`/shorten/${shortCode}`, 'GET');
             if (result) {
-                displayResult('urlDetails', 
-                    `Short Code: ${result.shortCode}<br>
-                     Original URL: ${result.url}<br>
-                     Created: ${new Date(result.createdAt).toLocaleString()}<br>
-                     Last Updated: ${new Date(result.updatedAt).toLocaleString()}<br>
-                     Accessed: ${result.accessCount} times`);
+                const detailsBox = document.getElementById('urlDetails');
+                detailsBox.innerHTML = `
+                    <div class="detail-row"><span>Short Code:</span> ${result.shortCode}</div>
+                    <div class="detail-row"><span>Original URL:</span> <a href="${result.url}" target="_blank">${result.url}</a></div>
+                    <div class="detail-row"><span>Created:</span> ${new Date(result.createdAt).toLocaleString()}</div>
+                    <div class="detail-row"><span>Last Updated:</span> ${new Date(result.updatedAt).toLocaleString()}</div>
+                    <div class="detail-row"><span>Accessed:</span> ${result.accessCount} times</div>
+                `;
+                showElement('urlDetails');
             }
         }
 
         async function updateUrl() {
-            const shortCode = document.getElementById('shortCodeInput').value;
-            const newUrl = document.getElementById('updateUrl').value;
+            const shortCode = document.getElementById('shortCodeInput').value.trim();
+            const newUrl = document.getElementById('updateUrl').value.trim();
             
             if (!shortCode || !newUrl) {
-                showError('Please enter both short code and new URL');
+                alert('Please enter both short code and new URL');
                 return;
             }
 
-            const result = await makeRequest(`${baseUrl}/shorten/${shortCode}`, 'PUT', { url: newUrl });
+            const result = await makeRequest(`/shorten/${shortCode}`, 'PUT', { url: newUrl });
             if (result) {
-                displayResult('urlDetails', 
-                    `Updated successfully!<br>
-                     New URL: ${result.url}<br>
-                     Short Code: ${result.shortCode}`);
+                alert('URL updated successfully!');
+                getUrlDetails(); // Refresh details
             }
         }
 
         async function deleteUrl() {
-            const shortCode = document.getElementById('shortCodeInput').value;
+            const shortCode = document.getElementById('shortCodeInput').value.trim();
             if (!shortCode) {
-                showError('Please enter a short code');
+                alert('Please enter a short code');
                 return;
             }
 
-            const response = await fetch(`${baseUrl}/shorten/${shortCode}`, { method: 'DELETE' });
-            if (response.ok) {
-                displayResult('urlDetails', 'URL deleted successfully');
-            } else {
-                const error = await response.json();
-                showError(error.error || 'Failed to delete URL');
+            if (confirm('Are you sure you want to delete this short URL?')) {
+                const response = await fetch(`/shorten/${shortCode}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert('URL deleted successfully');
+                    document.getElementById('urlDetails').innerHTML = '';
+                    document.getElementById('shortCodeInput').value = '';
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Failed to delete URL');
+                }
             }
         }
 
         async function getStats() {
-            const shortCode = document.getElementById('statsShortCode').value;
+            const shortCode = document.getElementById('statsShortCode').value.trim();
             if (!shortCode) {
-                showError('Please enter a short code');
+                alert('Please enter a short code');
                 return;
             }
 
-            const result = await makeRequest(`${baseUrl}/shorten/${shortCode}/stats`, 'GET');
+            hideElement('statsResult');
+            const result = await makeRequest(`/shorten/${shortCode}/stats`, 'GET');
             if (result) {
-                displayResult('statsResult', 
-                    `Short Code: ${result.shortCode}<br>
-                     Original URL: ${result.url}<br>
-                     Created: ${new Date(result.createdAt).toLocaleString()}<br>
-                     Last Updated: ${new Date(result.updatedAt).toLocaleString()}<br>
-                     Total Accesses: ${result.accessCount}`);
+                const statsBox = document.getElementById('statsResult');
+                statsBox.innerHTML = `
+                    <div class="stat-row"><span>Short Code:</span> ${result.shortCode}</div>
+                    <div class="stat-row"><span>Original URL:</span> <a href="${result.url}" target="_blank">${result.url}</a></div>
+                    <div class="stat-row"><span>Created:</span> ${new Date(result.createdAt).toLocaleString()}</div>
+                    <div class="stat-row"><span>Last Updated:</span> ${new Date(result.updatedAt).toLocaleString()}</div>
+                    <div class="stat-row"><span>Total Accesses:</span> ${result.accessCount}</div>
+                `;
+                showElement('statsResult');
             }
         }
     </script>
