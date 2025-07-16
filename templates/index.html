@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>URL Shortener</h1>
+        
+        <div class="section">
+            <h2>Create Short URL</h2>
+            <div class="form-group">
+                <input type="text" id="originalUrl" placeholder="Enter your long URL">
+                <button onclick="createShortUrl()">Shorten</button>
+            </div>
+            <div id="shortUrlResult" class="result-box"></div>
+        </div>
+
+        <div class="section">
+            <h2>Manage URL</h2>
+            <div class="form-group">
+                <input type="text" id="shortCodeInput" placeholder="Enter short code">
+                <button onclick="getUrlDetails()">Get Details</button>
+                <button onclick="deleteUrl()">Delete</button>
+            </div>
+            <div class="form-group">
+                <input type="text" id="updateUrl" placeholder="New URL to update">
+                <button onclick="updateUrl()">Update URL</button>
+            </div>
+            <div id="urlDetails" class="result-box"></div>
+        </div>
+
+        <div class="section">
+            <h2>URL Statistics</h2>
+            <div class="form-group">
+                <input type="text" id="statsShortCode" placeholder="Enter short code">
+                <button onclick="getStats()">Get Stats</button>
+            </div>
+            <div id="statsResult" class="result-box"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = window.location.origin;
+
+        async function makeRequest(url, method, data = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (data) options.body = JSON.stringify(data);
+            
+            try {
+                const response = await fetch(url, options);
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Something went wrong');
+                return result;
+            } catch (error) {
+                showError(error.message);
+                return null;
+            }
+        }
+
+        function showError(message) {
+            alert(`Error: ${message}`);
+        }
+
+        function displayResult(elementId, content, isUrl = false) {
+            const element = document.getElementById(elementId);
+            if (isUrl) {
+                element.innerHTML = `<a href="${content}" target="_blank">${content}</a>`;
+            } else {
+                element.innerHTML = content;
+            }
+        }
+
+        async function createShortUrl() {
+            const originalUrl = document.getElementById('originalUrl').value;
+            if (!originalUrl) {
+                showError('Please enter a URL');
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/shorten`, 'POST', { url: originalUrl });
+            if (result) {
+                displayResult('shortUrlResult', 
+                    `Short URL: ${baseUrl}/${result.shortCode}<br>
+                     Original: ${result.url}`, true);
+            }
+        }
+
+        async function getUrlDetails() {
+            const shortCode = document.getElementById('shortCodeInput').value;
+            if (!shortCode) {
+                showError('Please enter a short code');
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/shorten/${shortCode}`, 'GET');
+            if (result) {
+                displayResult('urlDetails', 
+                    `Short Code: ${result.shortCode}<br>
+                     Original URL: ${result.url}<br>
+                     Created: ${new Date(result.createdAt).toLocaleString()}<br>
+                     Last Updated: ${new Date(result.updatedAt).toLocaleString()}<br>
+                     Accessed: ${result.accessCount} times`);
+            }
+        }
+
+        async function updateUrl() {
+            const shortCode = document.getElementById('shortCodeInput').value;
+            const newUrl = document.getElementById('updateUrl').value;
+            
+            if (!shortCode || !newUrl) {
+                showError('Please enter both short code and new URL');
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/shorten/${shortCode}`, 'PUT', { url: newUrl });
+            if (result) {
+                displayResult('urlDetails', 
+                    `Updated successfully!<br>
+                     New URL: ${result.url}<br>
+                     Short Code: ${result.shortCode}`);
+            }
+        }
+
+        async function deleteUrl() {
+            const shortCode = document.getElementById('shortCodeInput').value;
+            if (!shortCode) {
+                showError('Please enter a short code');
+                return;
+            }
+
+            const response = await fetch(`${baseUrl}/shorten/${shortCode}`, { method: 'DELETE' });
+            if (response.ok) {
+                displayResult('urlDetails', 'URL deleted successfully');
+            } else {
+                const error = await response.json();
+                showError(error.error || 'Failed to delete URL');
+            }
+        }
+
+        async function getStats() {
+            const shortCode = document.getElementById('statsShortCode').value;
+            if (!shortCode) {
+                showError('Please enter a short code');
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/shorten/${shortCode}/stats`, 'GET');
+            if (result) {
+                displayResult('statsResult', 
+                    `Short Code: ${result.shortCode}<br>
+                     Original URL: ${result.url}<br>
+                     Created: ${new Date(result.createdAt).toLocaleString()}<br>
+                     Last Updated: ${new Date(result.updatedAt).toLocaleString()}<br>
+                     Total Accesses: ${result.accessCount}`);
+            }
+        }
+    </script>
+</body>
+</html>
