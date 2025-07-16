@@ -1,70 +1,197 @@
+/* Base Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     margin: 0;
     padding: 20px;
-    background-color: #f5f5f5;
+    background-color: #f8f9fa;
+    color: #333;
 }
 
 .container {
     max-width: 800px;
     margin: 0 auto;
     background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
 }
 
 h1, h2 {
-    color: #333;
+    color: #2c3e50;
+    margin-bottom: 15px;
 }
 
+h1 {
+    font-size: 2.2rem;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-top: 0;
+}
+
+/* Section Styles */
 .section {
     margin-bottom: 30px;
     padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
+/* Form Elements */
 .form-group {
     margin-bottom: 15px;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 input[type="text"] {
     flex: 1;
-    padding: 8px;
+    min-width: 200px;
+    padding: 10px 12px;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
 }
 
 button {
-    padding: 8px 15px;
-    background-color: #4CAF50;
+    padding: 10px 15px;
+    background-color: #4285f4;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #3367d6;
+    transform: translateY(-1px);
 }
 
+button.danger {
+    background-color: #ea4335;
+}
+
+button.danger:hover {
+    background-color: #d33426;
+}
+
+/* Result Boxes */
 .result-box {
     padding: 15px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* URL Display */
+.url-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#shortUrlInput {
+    flex: 1;
+    padding: 10px;
+    background-color: #f1f3f4;
+    border: 1px solid #dadce0;
     border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+#copyButton {
+    min-width: 80px;
+}
+
+#copyButton.copied {
+    background-color: #34a853;
+}
+
+.original-url {
+    font-size: 0.9em;
+    color: #5f6368;
+    margin-bottom: 10px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
     margin-top: 10px;
 }
 
-a {
-    color: #0066cc;
-    text-decoration: none;
+.actions button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
 }
 
-a:hover {
-    text-decoration: underline;
+/* Details and Stats Boxes */
+.details-box, .stats-box {
+    font-size: 0.95rem;
+}
+
+.detail-row, .stat-row {
+    margin-bottom: 8px;
+    display: flex;
+}
+
+.detail-row span, .stat-row span {
+    font-weight: 500;
+    min-width: 120px;
+    color: #5f6368;
+}
+
+/* Icons */
+.fas, .far {
+    font-size: 0.9em;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .form-group {
+        flex-direction: column;
+    }
+    
+    button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .url-display {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    #copyButton {
+        width: 100%;
+        margin-top: 5px;
+    }
 }
