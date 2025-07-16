@@ -145,3 +145,19 @@ def get_url_stats(short_code):
         'updatedAt': url_data['updatedAt'],
         'accessCount': url_data['accessCount']
     }), 200
+    
+@app.route('/<short_code>')
+def redirect_to_original(short_code):
+    url_data = urls_collection.find_one({'shortCode': short_code})
+    
+    if not url_data:
+        return jsonify({'error': 'Short URL not found'}), 404
+    
+    urls_collection.update_one(
+        {'_id': url_data['_id']},
+        {'$inc': {'accessCount': 1}}
+    )
+    
+    return redirect(url_data['url'])
+if __name__ == '__main__':
+    app.run(debug=True)
