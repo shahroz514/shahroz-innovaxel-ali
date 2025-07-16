@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, url_for
+from flask import Flask, request, jsonify, redirect, url_for, render_template
 from pymongo import MongoClient
 from datetime import datetime
 import shortuuid
@@ -18,6 +18,10 @@ def generate_short_code():
 
 def validate_url(url):
     return validators.url(url)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/shorten', methods=['POST'])
 def create_short_url():
